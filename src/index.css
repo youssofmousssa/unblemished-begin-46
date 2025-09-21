@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prevent any horizontal overflow globally */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Chat message containment */
+.prose {
+  max-width: none !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.prose p {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.prose code {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* Code block specific containment */
+.prose pre {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Mobile-first responsive typography */
+@media (max-width: 640px) {
+  .prose {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .prose code {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.25rem;
+  }
+}
+
+/* 🔥 PREMIUM MEDIA PLAYER DESIGN SYSTEM 🔥 */
+
+/* Custom Fonts */
+
+@layer base {
+  :root {
+    /* Minimalist Black/White/Cream Palette */
+    --background: 0 0% 5%;
+    --foreground: 30 10% 95%;
+    
+    --primary: 30 25% 85%; /* Cream */
+    --primary-foreground: 0 0% 5%;
+    --primary-glow: 30 15% 92%;
+    
+    --secondary: 0 0% 98%; /* Almost white */
+    --secondary-foreground: 0 0% 5%;
+    
+    --accent: 30 25% 85%; /* Cream accent */
+    --accent-foreground: 0 0% 5%;
+    --accent-glow: 30 20% 90%;
+    
+    --card: 0 0% 8%;
+    --card-foreground: 30 10% 95%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 30 5% 60%;
+    
+    --border: 0 0% 20%;
+    --input: 0 0% 12%;
+    --ring: 30 25% 85%;
+    
+    --destructive: 0 50% 30%;
+    --destructive-foreground: 30 10% 95%;
+    
+    --popover: 0 0% 8%;
+    --popover-foreground: 30 10% 95%;
+    
+    /* Minimalist Player Colors */
+    --player-bg: 0 0% 8%;
+    --player-overlay: 0 0% 0%;
+    --player-control: 30 25% 85%; /* Cream controls */
+    --player-accent: 30 25% 85%;
+    --player-glass: 30 25% 85%;
+    
+    /* Minimalist Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(30 25% 85%) 0%, hsl(0 0% 98%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(217,204,187,0.1) 0%, rgba(217,204,187,0.05) 100%);
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.6) 100%);
+    --gradient-control: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+    
+    /* Minimalist Shadows */
+    --shadow-glow: 0 0 30px rgba(217,204,187,0.2);
+    --shadow-dramatic: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    --shadow-control: 0 6px 20px rgba(0, 0, 0, 0.3);
+    --blur-glass: 10px;
+    
+    /* Smooth Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground min-h-screen;
+    background: hsl(var(--background));
+  }
+}
+
+/* 🔥 PREMIUM PLAYER UTILITIES 🔥 */
+@layer utilities {
+  .scrollable-tabs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+  }
+  
+  .scrollable-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollable-tabs > * {
+    flex-shrink: 0;
+  }
+  
+  /* 🔥 Glass Effect */
+  .glass-effect {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(var(--blur-glass));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* 🔥 Premium Shadows */
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .shadow-dramatic {
+    box-shadow: var(--shadow-dramatic);
+  }
+  
+  .shadow-control {
+    box-shadow: var(--shadow-control);
+  }
+  
+  /* 🔥 Smooth Transitions */
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+  
+  /* 🔥 Player Specific */
+  .player-control {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .control-button {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: var(--transition-smooth);
+  }
+  
+  .control-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+  }
+  
+  /* 🔥 Progress Bar Enhancements */
+  .progress-glow {
+    filter: drop-shadow(0 0 8px hsl(var(--accent)));
+  }
+}

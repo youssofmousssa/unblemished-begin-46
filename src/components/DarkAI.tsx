@@ -31,11 +31,13 @@ import { useAuth } from "@/context/AuthContext";
 import { sendEmailVerification } from "firebase/auth";
 import { auth } from "@/config/firebase";
 import MobileSidebar, { AnimatedHamburger } from "@/components/MobileSidebar";
+import DesktopSidebar, { AnimatedDesktopHamburger } from "@/components/DesktopSidebar";
 
 const DarkAI = () => {
   const [activeTab, setActiveTab] = useState("video-generation");
   const [isLoading, setIsLoading] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(false);
   const { toast } = useToast();
   const { processedMedia, isProcessing, processApiResponse, clearMedia } = useMediaProcessor();
   const { currentUser, isEmailVerified } = useAuth();
@@ -540,70 +542,79 @@ const DarkAI = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 pb-12">
-        {/* Email verification warning */}
-        {currentUser && !isEmailVerified && (
-          <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg border border-destructive/20 animate-fade-in">
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium">Email not verified</p>
-                <p className="text-sm opacity-90">Please verify your email to access all AI services.</p>
+        <div className="container mx-auto px-6 pb-12">
+          {/* Email verification warning */}
+          {currentUser && !isEmailVerified && (
+            <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg border border-destructive/20 animate-fade-in">
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium">Email not verified</p>
+                  <p className="text-sm opacity-90">Please verify your email to access all AI services.</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={sendVerificationEmail}
+                  className="underline hover:bg-destructive/20 transition-smooth"
+                >
+                  Resend Email
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={sendVerificationEmail}
-                className="underline hover:bg-destructive/20 transition-smooth"
-              >
-                Resend Email
-              </Button>
             </div>
-          </div>
-        )}
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Mobile Header with Hamburger Menu */}
-          <div className="flex items-center justify-between mb-6 md:hidden">
-            <AnimatedHamburger 
-              isOpen={isMobileSidebarOpen} 
-              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} 
+          )}
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Desktop Header with Hamburger Menu */}
+            <div className="hidden md:flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <AnimatedDesktopHamburger 
+                  isOpen={isDesktopSidebarOpen} 
+                  onClick={() => setIsDesktopSidebarOpen(!isDesktopSidebarOpen)} 
+                />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl shadow-glow">
+                    <span className="text-2xl">🔥</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      {tabs.find(tab => tab.id === activeTab)?.label || 'DarkAI Platform'}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">Advanced AI Services</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Header with Hamburger Menu */}
+            <div className="flex items-center justify-between mb-6 md:hidden">
+              <AnimatedHamburger 
+                isOpen={isMobileSidebarOpen} 
+                onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} 
+              />
+              <h2 className="text-lg font-semibold text-foreground">
+                {tabs.find(tab => tab.id === activeTab)?.label || 'DarkAI'}
+              </h2>
+              <div className="w-10" /> {/* Spacer for balance */}
+            </div>
+
+            {/* Desktop Sidebar */}
+            <DesktopSidebar
+              isOpen={isDesktopSidebarOpen}
+              onClose={() => setIsDesktopSidebarOpen(false)}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabs={tabs}
             />
-            <h2 className="text-lg font-semibold text-foreground">
-              {tabs.find(tab => tab.id === activeTab)?.label || 'DarkAI'}
-            </h2>
-            <div className="w-10" /> {/* Spacer for balance */}
-          </div>
 
-          {/* Mobile Sidebar */}
-          <MobileSidebar
-            isOpen={isMobileSidebarOpen}
-            onClose={() => setIsMobileSidebarOpen(false)}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            tabs={tabs}
-          />
-
-          {/* Desktop Tab Navigation Container */}
-          <div className="hidden md:block w-full mb-8 bg-card border border-border rounded-lg p-2">
-            <div className="overflow-x-auto scrollable-tabs">
-              <TabsList className="inline-flex w-max bg-transparent p-0 h-auto gap-1">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className="flex items-center gap-2 px-4 py-3 whitespace-nowrap rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:hover:bg-secondary transition-all min-w-fit"
-                    >
-                      <Icon className="w-4 h-4 flex-shrink-0" />
-                      <span className="font-medium">{tab.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </div>
-          </div>
+            {/* Mobile Sidebar */}
+            <MobileSidebar
+              isOpen={isMobileSidebarOpen}
+              onClose={() => setIsMobileSidebarOpen(false)}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabs={tabs}
+            />
 
           {/* Text Chat Tab */}
           <TabsContent value="text-chat" className="space-y-6">

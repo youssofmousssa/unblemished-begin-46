@@ -32,6 +32,7 @@ import { sendEmailVerification } from "firebase/auth";
 import { auth } from "@/config/firebase";
 import MobileSidebar, { AnimatedHamburger } from "@/components/MobileSidebar";
 import DesktopSidebar, { AnimatedDesktopHamburger } from "@/components/DesktopSidebar";
+import { DarkAIService, SocialDownloadResponse } from "@/services/darkAIService";
 
 const DarkAI = () => {
   const [activeTab, setActiveTab] = useState("video-generation");
@@ -108,7 +109,7 @@ const DarkAI = () => {
 
   const [socialData, setSocialData] = useState({
     url: "",
-    result: null
+    result: null as SocialDownloadResponse | null
   });
 
   const [bgRemovalData, setBgRemovalData] = useState({
@@ -358,35 +359,16 @@ const DarkAI = () => {
 
     setIsLoading(true);
     try {
-      const endpoint = musicData.type === "with-lyrics" ? "/api/music" : "/api/create-music";
+      let result;
       
-      let body: any = {
-        api_key: API_KEY
-      };
-
-      if (musicData.type === "with-lyrics") {
-        body.lyrics = musicData.lyrics;
-        if (musicData.tags && musicData.tags.trim()) {
-          body.tags = musicData.tags.trim();
-        }
-      } else {
-        body.text = musicData.lyrics;
+      if (musicData.type === "15s-instrumental") {
+        result = await DarkAIService.create15sMusic(musicData.lyrics);
+      } else if (musicData.type === "full-song") {
+        const tags = musicData.tags || "pop";
+        result = await DarkAIService.createFullMusic(musicData.lyrics, tags);
       }
 
-      const response = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      const musicUrl = result.url || result.music_url || result.music || "Music generated successfully";
+      const musicUrl = result?.response || "Music generated successfully";
       setMusicData(prev => ({ ...prev, musicUrl }));
       processApiResponse(result);
       
@@ -429,29 +411,12 @@ const DarkAI = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/api/social-downloader`, {
-        method: "POST",
-        headers: {
-          "accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          url: socialData.url.trim(),
-          api_key: API_KEY
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("Social download result:", result);
+      const result = await DarkAIService.downloadSocialMedia(socialData.url.trim());
       setSocialData(prev => ({ ...prev, result }));
       
       toast({
         title: "Success",
-        description: "Content downloaded successfully!"
+        description: `Found ${result.links?.length || 0} download options!`
       });
     } catch (error) {
       console.error("Social download error:", error);
@@ -462,6 +427,34 @@ const DarkAI = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDownloadLink = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${filename}...`
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      // Fallback: open in new tab
+      window.open(url, '_blank');
+      toast({
+        title: "Download Link Opened",
+        description: "The download link has been opened in a new tab."
+      });
     }
   };
 
@@ -878,27 +871,27 @@ const DarkAI = () => {
                       <SelectValue placeholder="Select Music Type" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      <SelectItem value="with-lyrics" className="text-popover-foreground">Full Song with Lyrics</SelectItem>
-                      <SelectItem value="instrumental" className="text-popover-foreground">15s Instrumental</SelectItem>
+                      <SelectItem value="full-song" className="text-popover-foreground">🎵 Full Song (3:15 with Lyrics)</SelectItem>
+                      <SelectItem value="15s-instrumental" className="text-popover-foreground">🎼 15s Instrumental</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="music-lyrics" className="text-foreground">
-                    {musicData.type === "with-lyrics" ? "Lyrics" : "Music Description"}
+                    {musicData.type === "full-song" ? "Lyrics" : "Music Description"}
                   </Label>
                   <Textarea
                     value={musicData.lyrics}
                     onChange={(e) => setMusicData(prev => ({ ...prev, lyrics: e.target.value }))}
                     placeholder={
-                      musicData.type === "with-lyrics" 
+                      musicData.type === "full-song" 
                         ? "Enter the lyrics for your song..."
                         : "Describe the instrumental music you want..."
                     }
                     className="min-h-32 bg-input border-border text-foreground resize-none"
                   />
                 </div>
-                {musicData.type === "with-lyrics" && (
+                {musicData.type === "full-song" && (
                   <div>
                     <Label htmlFor="music-tags" className="text-foreground">Tags (Optional)</Label>
                     <Input
@@ -992,95 +985,60 @@ const DarkAI = () => {
                 </div>
                 {socialData.result && (
                   <div>
-                    <Label className="text-foreground">Download Result</Label>
+                    <Label className="text-foreground">Download Options</Label>
                     <div className="bg-gradient-to-br from-blue-500/5 to-cyan-500/10 p-6 rounded-xl border border-border space-y-4">
-                      {(() => {
-                        const result = socialData.result;
-                        
-                        if (result && typeof result === 'object' && (result.video_url || result.thumbnail || result.audio_url || result.download_links)) {
-                          return (
-                            <div className="space-y-4">
-                              <div className="text-center">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-full border border-green-500/20">
-                                  <Download className="w-4 h-4" />
-                                  <span className="text-sm font-medium">Content Ready for Download!</span>
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-full border border-green-500/20">
+                          <Download className="w-4 h-4" />
+                          <span className="text-sm font-medium">{socialData.result.links?.length || 0} Download Options Found!</span>
+                        </div>
+                      </div>
+                      
+                      {socialData.result.title && (
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-foreground mb-2">{socialData.result.title}</h3>
+                        </div>
+                      )}
+                      
+                      {socialData.result.links && socialData.result.links.length > 0 && (
+                        <div className="grid gap-3 max-w-2xl mx-auto">
+                          {socialData.result.links.map((link, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              size="default"
+                              onClick={() => handleDownloadLink(
+                                link.url,
+                                DarkAIService.getDownloadFilename(socialData.result?.title || 'download', link)
+                              )}
+                              className="w-full justify-start gap-3 h-auto p-4 bg-gradient-to-r from-primary/5 to-secondary/5 hover:from-primary/10 hover:to-secondary/10 border-primary/20 hover:border-primary/40 transition-all duration-300"
+                            >
+                              <div className="flex items-center gap-2">
+                                {link.type === 'audio' ? (
+                                  <Volume2 className="w-5 h-5 text-green-500" />
+                                ) : (
+                                  <VideoIcon className="w-5 h-5 text-blue-500" />
+                                )}
+                                <div className="text-left">
+                                  <div className="font-semibold text-foreground">
+                                    {DarkAIService.formatQualityLabel(link)}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Click to download
+                                  </div>
                                 </div>
                               </div>
-                              
-                              {result.thumbnail && !result.video_url && (
-                                <div className="text-center">
-                                  <img 
-                                    src={result.thumbnail} 
-                                    alt="Content thumbnail"
-                                    className="max-w-sm mx-auto rounded-lg shadow-lg"
-                                  />
-                                </div>
-                              )}
-                              
-                              {(result.download_links || result.video_url || result.audio_url) && (
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                  {result.video_url && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => window.open(result.video_url, '_blank')}
-                                    >
-                                      <VideoIcon className="w-4 h-4 mr-2" />
-                                      Download Video
-                                    </Button>
-                                  )}
-                                  {result.audio_url && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => window.open(result.audio_url, '_blank')}
-                                    >
-                                      <Volume2 className="w-4 h-4 mr-2" />
-                                      Download Audio
-                                    </Button>
-                                  )}
-                                  {Array.isArray(result.download_links) && result.download_links.map((link, index) => (
-                                    <Button
-                                      key={index}
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => window.open(link, '_blank')}
-                                    >
-                                      <Download className="w-4 h-4 mr-2" />
-                                      Download {index + 1}
-                                    </Button>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              {(result.title || result.description) && (
-                                <div className="bg-muted/50 p-4 rounded-lg">
-                                  {result.title && (
-                                    <h4 className="font-semibold text-foreground mb-2">{result.title}</h4>
-                                  )}
-                                  {result.description && (
-                                    <p className="text-sm text-muted-foreground">{result.description}</p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        } else {
-                          return (
-                            <div className="text-center py-8">
-                              <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/10 text-yellow-600 rounded-full border border-yellow-500/20 mb-4">
-                                <Download className="w-4 h-4" />
-                                <span className="text-sm font-medium">Download Response</span>
-                              </div>
-                              <div className="bg-muted/50 p-4 rounded-lg max-h-64 overflow-auto">
-                                <pre className="text-sm text-foreground whitespace-pre-wrap text-left">
-                                  {JSON.stringify(result, null, 2)}
-                                </pre>
-                              </div>
-                            </div>
-                          );
-                        }
-                      })()}
+                              <Download className="w-4 h-4 ml-auto text-primary" />
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {socialData.result.dev && (
+                        <div className="text-center text-xs text-muted-foreground mt-4">
+                          {socialData.result.dev}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

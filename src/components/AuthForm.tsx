@@ -108,7 +108,7 @@ const AuthForm = () => {
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-glow overflow-hidden">
             <img
-              src="/lovable-uploads/07dbe6e8-76e8-4ff8-8c1b-d1fb8127fcf7.png"
+              src="https://cdn.snapzion.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/cbaeb057-7201-4091-8a7f-fc47f53d7d07.png"
               alt="DarkAI Logo"
               className="w-full h-full object-cover"
             />

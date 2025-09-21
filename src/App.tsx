@@ -28,7 +28,7 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/app" element={<Index />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat" element={<div className="min-h-screen bg-background flex items-center justify-center"><div className="text-center space-y-4"><h1 className="text-4xl font-bold text-foreground">Chat Coming Soon</h1><p className="text-muted-foreground">This chat folder is ready for your files.</p></div></div>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

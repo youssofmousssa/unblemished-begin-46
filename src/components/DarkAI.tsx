@@ -627,7 +627,7 @@ const DarkAI = () => {
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">Chat is now available as a dedicated page for better experience</p>
                   <Button 
-                    onClick={() => window.location.href = '/chat'} 
+                    onClick={() => (window.location.href = '/chat/')} 
                     className="bg-card text-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 border border-border"
                   >
                     Go to Chat Page

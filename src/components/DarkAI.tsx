@@ -522,8 +522,22 @@ const DarkAI = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Fixed Mobile Header with Hamburger Menu */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <AnimatedHamburger 
+            isOpen={isMobileSidebarOpen} 
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} 
+          />
+          <h2 className="text-lg font-semibold text-foreground">
+            {tabs.find(tab => tab.id === activeTab)?.label || 'DarkAI'}
+          </h2>
+          <div className="w-10" /> {/* Spacer for balance */}
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8 pt-20 md:pt-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-5xl font-bold mb-4 text-primary">
             DarkAI Platform
@@ -577,18 +591,6 @@ const DarkAI = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Mobile Header with Hamburger Menu */}
-            <div className="flex items-center justify-between mb-6 md:hidden">
-              <AnimatedHamburger 
-                isOpen={isMobileSidebarOpen} 
-                onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} 
-              />
-              <h2 className="text-lg font-semibold text-foreground">
-                {tabs.find(tab => tab.id === activeTab)?.label || 'DarkAI'}
-              </h2>
-              <div className="w-10" /> {/* Spacer for balance */}
             </div>
 
             {/* Desktop Sidebar */}

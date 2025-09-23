@@ -34,6 +34,8 @@ import { auth } from "@/config/firebase";
 import MobileSidebar, { AnimatedHamburger } from "@/components/MobileSidebar";
 import DesktopSidebar, { AnimatedDesktopHamburger } from "@/components/DesktopSidebar";
 import { DarkAIService, SocialDownloadResponse } from "@/services/darkAIService";
+import { imageService } from '@/services/imageService';
+import { toast } from 'sonner';
 
 const DarkAI = () => {
   const [activeTab, setActiveTab] = useState("video-generation");
@@ -121,9 +123,10 @@ const DarkAI = () => {
 
   const [imgGenerationData, setImgGenerationData] = useState({
     prompt: "",
-    model: "flux-schnell",
+    model: "gemini",
     size: "1024x1024",
-    imageUrl: ""
+    imageUrl: "",
+    editImageUrl: ""
   });
 
   const tabs = [
@@ -1329,15 +1332,16 @@ const DarkAI = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="imgModel" className="text-foreground">Model</Label>
+                    <Label htmlFor="imgModel" className="text-foreground">AI Model</Label>
                     <Select value={imgGenerationData.model} onValueChange={(value) => setImgGenerationData(prev => ({ ...prev, model: value }))}>
                       <SelectTrigger className="bg-input border-border text-foreground">
                         <SelectValue placeholder="Select model" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="flux-schnell">Flux Schnell</SelectItem>
-                        <SelectItem value="flux-dev">Flux Dev</SelectItem>
-                        <SelectItem value="stable-diffusion">Stable Diffusion</SelectItem>
+                        <SelectItem value="gemini">Gemini Pro</SelectItem>
+                        <SelectItem value="gpt">GPT-5</SelectItem>
+                        <SelectItem value="flux-pro">Flux Pro</SelectItem>
+                        <SelectItem value="img-cv">High Quality (img-cv)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1357,6 +1361,20 @@ const DarkAI = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* Image Upload for Editing */}
+                <div>
+                  <Label className="text-foreground">Edit Existing Image (Optional)</Label>
+                  <p className="text-sm text-muted-foreground mb-3">Upload an image to edit it based on your prompt, or leave empty to generate a new image.</p>
+                  <ImageUpload
+                    label="Upload Image to Edit"
+                    placeholder="Select an image to edit with AI"
+                    onUploadComplete={(url) => setImgGenerationData(prev => ({ ...prev, editImageUrl: url }))}
+                    currentUrl={imgGenerationData.editImageUrl}
+                    onUrlChange={(url) => setImgGenerationData(prev => ({ ...prev, editImageUrl: url }))}
+                    showUrlInput={true}
+                  />
                 </div>
 
                 {imgGenerationData.imageUrl && (
@@ -1423,18 +1441,49 @@ const DarkAI = () => {
 
                     setIsLoading(true);
                     try {
-                      // Placeholder image generation - replace with actual API when available
-                      const mockImageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+                      let imageUrl: string;
+                      const editImageUrl = imgGenerationData.editImageUrl;
+
+                      switch (imgGenerationData.model) {
+                        case 'gemini':
+                          imageUrl = await imageService.generateWithGemini(imgGenerationData.prompt, editImageUrl);
+                          break;
+                        case 'gpt':
+                          imageUrl = await imageService.generateWithGPT(imgGenerationData.prompt, editImageUrl);
+                          break;
+                        case 'flux-pro':
+                          if (editImageUrl) {
+                            toast({
+                              title: "Image editing not supported",
+                              description: "Flux Pro only supports new image generation. Please use Gemini or GPT for image editing.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          imageUrl = await imageService.generateWithFluxPro(imgGenerationData.prompt);
+                          break;
+                        case 'img-cv':
+                          if (editImageUrl) {
+                            toast({
+                              title: "Image editing not supported",
+                              description: "img-cv only supports new image generation. Please use Gemini or GPT for image editing.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          imageUrl = await imageService.generateWithImgCV(imgGenerationData.prompt);
+                          break;
+                        default:
+                          throw new Error('Invalid model selected');
+                      }
                       
-                      // Simulate API call delay
-                      await new Promise(resolve => setTimeout(resolve, 2000));
-                      
-                      setImgGenerationData(prev => ({ ...prev, imageUrl: mockImageUrl }));
+                      setImgGenerationData(prev => ({ ...prev, imageUrl }));
                       toast({
                         title: "Image generated successfully!",
-                        description: "Your image has been created.",
+                        description: editImageUrl ? "Your image has been edited." : "Your image has been created.",
                       });
                     } catch (error: any) {
+                      console.error("Image generation error:", error);
                       toast({
                         title: "Error generating image",
                         description: error.message || "Failed to generate image. Please try again.",
@@ -1450,12 +1499,12 @@ const DarkAI = () => {
                   {isLoading ? (
                     <>
                       <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                      Generating Image...
+                      {imgGenerationData.editImageUrl ? 'Editing Image...' : 'Generating Image...'}
                     </>
                   ) : (
                     <>
                       <ImageIcon className="w-4 h-4 mr-2" />
-                      Generate Image
+                      {imgGenerationData.editImageUrl ? 'Edit Image' : 'Generate Image'}
                     </>
                   )}
                 </Button>

@@ -10,6 +10,7 @@ import {
   MessageCircle, 
   Volume2, 
   VideoIcon, 
+  ImageIcon,
   Music, 
   Download, 
   Scissors,
@@ -118,8 +119,16 @@ const DarkAI = () => {
     uploadedImageUrl: ""
   });
 
+  const [imgGenerationData, setImgGenerationData] = useState({
+    prompt: "",
+    model: "flux-schnell",
+    size: "1024x1024",
+    imageUrl: ""
+  });
+
   const tabs = [
     { id: "video-generation", label: "Video Generation", icon: VideoIcon },
+    { id: "img-generation", label: "IMG Generation", icon: ImageIcon },
     { id: "text-chat", label: "Text Chat", icon: MessageCircle },
     { id: "tts", label: "TTS", icon: Volume2 },
     { id: "music-generation", label: "Music Generation", icon: Music },
@@ -1293,13 +1302,174 @@ const DarkAI = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* IMG Generation Tab */}
+          <TabsContent value="img-generation" className="space-y-6">
+            <Card className="bg-card border border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <ImageIcon className="w-6 h-6" />
+                  Image Generation
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Generate high-quality images from text prompts using AI
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="imgPrompt" className="text-foreground">Image Prompt</Label>
+                  <Textarea
+                    id="imgPrompt"
+                    value={imgGenerationData.prompt}
+                    onChange={(e) => setImgGenerationData(prev => ({ ...prev, prompt: e.target.value }))}
+                    placeholder="Describe the image you want to generate..."
+                    className="min-h-24 bg-input border-border text-foreground resize-none"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="imgModel" className="text-foreground">Model</Label>
+                    <Select value={imgGenerationData.model} onValueChange={(value) => setImgGenerationData(prev => ({ ...prev, model: value }))}>
+                      <SelectTrigger className="bg-input border-border text-foreground">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="flux-schnell">Flux Schnell</SelectItem>
+                        <SelectItem value="flux-dev">Flux Dev</SelectItem>
+                        <SelectItem value="stable-diffusion">Stable Diffusion</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="imgSize" className="text-foreground">Image Size</Label>
+                    <Select value={imgGenerationData.size} onValueChange={(value) => setImgGenerationData(prev => ({ ...prev, size: value }))}>
+                      <SelectTrigger className="bg-input border-border text-foreground">
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="512x512">512x512</SelectItem>
+                        <SelectItem value="768x768">768x768</SelectItem>
+                        <SelectItem value="1024x1024">1024x1024 (Recommended)</SelectItem>
+                        <SelectItem value="1536x1024">1536x1024 (Landscape)</SelectItem>
+                        <SelectItem value="1024x1536">1024x1536 (Portrait)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {imgGenerationData.imageUrl && (
+                  <div>
+                    <Label className="text-foreground">Generated Image</Label>
+                    <div className="bg-gradient-to-br from-purple-500/5 to-pink-500/10 p-6 rounded-xl border border-border space-y-4">
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-full border border-green-500/20">
+                          <ImageIcon className="w-4 h-4" />
+                          <span className="text-sm font-medium">Image Generated Successfully!</span>
+                        </div>
+                      </div>
+                      
+                      <div className="relative group max-w-md mx-auto">
+                        <img 
+                          src={imgGenerationData.imageUrl} 
+                          alt="Generated image"
+                          className="w-full h-auto object-contain rounded-xl shadow-2xl border-2 border-primary/20 animate-fade-in"
+                        />
+                        
+                        <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-8 w-8 p-0 bg-black/80 hover:bg-black/90 text-white shadow-lg backdrop-blur-sm"
+                            onClick={() => window.open(imgGenerationData.imageUrl, '_blank')}
+                            title="View full size"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-8 w-8 p-0 bg-black/80 hover:bg-black/90 text-white shadow-lg backdrop-blur-sm"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = imgGenerationData.imageUrl;
+                              link.download = 'generated-image.png';
+                              link.target = '_blank';
+                              link.click();
+                            }}
+                            title="Download image"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={async () => {
+                    if (!checkEmailVerification()) return;
+                    
+                    if (!imgGenerationData.prompt.trim()) {
+                      toast({
+                        title: "Missing prompt",
+                        description: "Please enter a prompt for image generation.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
+                    setIsLoading(true);
+                    try {
+                      // Placeholder image generation - replace with actual API when available
+                      const mockImageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+                      
+                      // Simulate API call delay
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                      
+                      setImgGenerationData(prev => ({ ...prev, imageUrl: mockImageUrl }));
+                      toast({
+                        title: "Image generated successfully!",
+                        description: "Your image has been created.",
+                      });
+                    } catch (error: any) {
+                      toast({
+                        title: "Error generating image",
+                        description: error.message || "Failed to generate image. Please try again.",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading || !imgGenerationData.prompt.trim()}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isLoading ? (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2 animate-spin" />
+                      Generating Image...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Generate Image
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
         
-        {/* Conditional Media Viewer - Only for video, social downloader, and tts */}
+        {/* Conditional Media Viewer - Only for video, social downloader, tts, and img-generation */}
         {(processedMedia || isProcessing) && 
          (activeTab === "video-generation" || 
           activeTab === "social-downloader" || 
-          activeTab === "tts") && (
+          activeTab === "tts" ||
+          activeTab === "img-generation") && (
           <div className="mt-8">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50">
               <CardHeader>

@@ -37,7 +37,6 @@ const telegramButtons = [
   { id: 'support', label: 'Support', username: 'zdarkai', icon: Users },
   { id: 'channel', label: 'Channel', username: 'darkaix', icon: Send },
   { id: 'owner', label: 'Owner', username: 'sii_3', icon: User },
-  { id: 'developer', label: 'Developer', username: 'youssofxmoussa', icon: Code },
 ];
 
 export const AnimatedHamburger: React.FC<{ isOpen: boolean; onClick: () => void }> = ({ isOpen, onClick }) => {
